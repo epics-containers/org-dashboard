@@ -37,7 +37,7 @@ query($q: String!, $cursor: String) {
         number
         title
         url
-        author { login }
+        author { login __typename }
         createdAt
         updatedAt
         closedAt
@@ -49,7 +49,7 @@ query($q: String!, $cursor: String) {
         number
         title
         url
-        author { login }
+        author { login __typename }
         createdAt
         updatedAt
         closedAt
@@ -102,6 +102,7 @@ def row(node: dict, kind: str, new_cutoff: str) -> dict:
         "t": node["title"],
         "u": node["url"],
         "a": node["author"]["login"] if node.get("author") else "ghost",
+        "bot": node["author"]["__typename"] == "Bot" if node.get("author") else False,
         "c": node["createdAt"][:10],
         "up": node["updatedAt"][:10],
         "l": [lb["name"] for lb in node["labels"]["nodes"]],
