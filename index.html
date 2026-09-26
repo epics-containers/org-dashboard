@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>epics-containers Open Work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F4F6F8; --panel:#FFFFFF; --ink:#18202B; --muted:#5A6573; --faint:#8A94A2;
+  --rule:#DCE1E7; --rule-strong:#C3CBD5;
+  --accent:#0F7B6C; --accent-soft:#E1F1EE;
+  --merged:#6A45B8; --merged-soft:#EEE8F8;
+  --closed:#4B5B70; --closed-soft:#E6EAF0;
+  --new:#A06A00; --new-soft:#FBF1E0;
+  --bot:#8A94A2; --bot-soft:#EEF0F3;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0F141A; --panel:#161D25; --ink:#E4E9EF; --muted:#9AA5B3; --faint:#6D7886;
+    --rule:#26303B; --rule-strong:#34404D;
+    --accent:#3CC2AA; --accent-soft:#12302B;
+    --merged:#B29AF0; --merged-soft:#2A2244;
+    --closed:#A9B7C9; --closed-soft:#222C38;
+    --new:#E7B454; --new-soft:#2E2417;
+    --bot:#6D7886; --bot-soft:#1E252E;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0F141A; --panel:#161D25; --ink:#E4E9EF; --muted:#9AA5B3; --faint:#6D7886;
+  --rule:#26303B; --rule-strong:#34404D;
+  --accent:#3CC2AA; --accent-soft:#12302B;
+  --merged:#B29AF0; --merged-soft:#2A2244;
+  --closed:#A9B7C9; --closed-soft:#222C38;
+  --new:#E7B454; --new-soft:#2E2417;
+  --bot:#6D7886; --bot-soft:#1E252E;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+h1,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(26px,4vw,36px);font-weight:800;line-height:1.1}
+h3{font-size:15px;font-weight:700}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:flex;flex-direction:column;gap:12px}
+header p{margin:0;max-width:74ch;color:var(--muted)}
+.fresh{font:500 12.5px var(--mono);color:var(--muted)}
+.fresh b{color:var(--ink);font-weight:600}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));border:1px solid var(--rule);border-radius:6px;background:var(--panel);overflow:hidden}
+.strip div{padding:14px 16px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:4px}
+.strip div:last-child{border-right:0}
+.strip b{font:700 26px/1 var(--display);font-variant-numeric:tabular-nums}
+.strip span{font-size:12px;color:var(--muted)}
+.strip .k-merged b{color:var(--merged)} .strip .k-closed b{color:var(--closed)} .strip .k-new b{color:var(--new)} .strip .k-open b{color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.controls button{font:500 12.5px/1 var(--body);border:1px solid var(--rule-strong);background:var(--panel);color:var(--ink);padding:7px 11px;border-radius:5px;cursor:pointer}
+.controls button[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.controls .sep{width:1px;height:22px;background:var(--rule-strong);margin:0 4px}
+.controls input[type=search]{font:14px var(--body);padding:7px 10px;border:1px solid var(--rule-strong);border-radius:5px;background:var(--panel);color:var(--ink);min-width:0;flex:1 1 220px;max-width:340px}
+.controls label{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.count{font:500 12.5px var(--mono);color:var(--muted);margin-left:auto}
+details.grp{border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+details.grp+details.grp{margin-top:8px}
+details.grp summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:11px 16px}
+details.grp summary::-webkit-details-marker{display:none}
+details.grp summary::before{content:"▸";color:var(--faint);font-size:12px;transition:transform .15s}
+details.grp[open] summary::before{transform:rotate(90deg)}
+details.grp summary .tally{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.chip{display:inline-flex;align-items:center;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:4px;white-space:nowrap;letter-spacing:.02em}
+.c-open{background:var(--accent-soft);color:var(--accent)}
+.c-merged{background:var(--merged-soft);color:var(--merged)}
+.c-closed,.c-not_planned{background:var(--closed-soft);color:var(--closed)}
+.c-new{background:var(--new-soft);color:var(--new)}
+.c-bot,.c-draft{background:var(--bot-soft);color:var(--bot)}
+.items{list-style:none;margin:0;padding:0 16px 6px}
+.items li{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:4px 14px;padding:9px 0;border-top:1px solid var(--rule);align-items:start}
+.items .ref{font:500 12.5px var(--mono);white-space:nowrap}
+.items .kind{display:block;font:500 10px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.items .t{display:block;overflow-wrap:anywhere}
+.items .meta{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.items .meta .lb{font:11px var(--mono);border:1px solid var(--rule-strong);border-radius:3px;padding:0 4px;margin-left:4px;white-space:nowrap}
+.items .st{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.items li.done .t{text-decoration:line-through;text-decoration-color:var(--faint);color:var(--muted)}
+@media (max-width:640px){.items li{grid-template-columns:auto 1fr}.items .st{flex-direction:row;justify-content:flex-end}.items .body{grid-column:1/-1;order:3}}
+.empty{color:var(--muted);font-style:italic;padding:12px 16px}
+footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-direction:column;gap:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">epics-containers &middot; GitHub organisation</span>
+    <h1>Open issues and pull requests</h1>
+    <p>Everything open across the organisation, refreshed on a schedule. Items closed or merged
+      recently are struck through and labelled with when; items opened recently are marked new.</p>
+    <span class="fresh" id="fresh">Loading&hellip;</span>
+    <div class="strip" id="strip"></div>
+  </header>
+
+  <div class="controls" id="kind"></div>
+  <div class="controls">
+    <span id="state"></span>
+    <span class="sep" aria-hidden="true"></span>
+    <label><input type="checkbox" id="bots"> Show bot PRs</label>
+    <input id="q" type="search" placeholder="Filter by repo, title, author or label" aria-label="Filter by repo, title, author or label">
+    <span class="count" id="count"></span>
+  </div>
+  <div id="groups"></div>
+
+  <footer>
+    <span id="foot">Data generated by a scheduled GitHub Action.</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const BOTS = /\[bot\]$/;
+  const fmtDate = d => d ? new Date(d+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",timeZone:"UTC"}) : "";
+  const fmtDateTime = d => d ? new Date(d).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC",timeZoneName:"short"}) : "";
+  const LABEL = {merged:"merged",closed:"closed",not_planned:"closed (not planned)",open:"open",new:"new"};
+  const REPO = "epics-containers/org-dashboard";
+  const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/pages.yml`;
+  let rows = [];
+  let kind="all", state="all";
+
+  function render(){
+    const showBots = $("#bots").checked;
+    const vis = rows.filter(r=>showBots || r.k==="issue" || !bot(r));
+    const n = f => vis.filter(f).length;
+    const cells = [
+      ["k-open", n(r=>r.s==="open"), "open now"],
+      ["", n(r=>r.k==="issue"&&r.s==="open"), "issues"],
+      ["", n(r=>r.k==="pr"&&r.s==="open"), "pull requests"],
+      ["k-merged", n(r=>r.s==="merged"), "merged since"],
+      ["k-closed", n(r=>r.s==="closed"||r.s==="not_planned"), "closed since"],
+      ["k-new", n(r=>r.isNew), "opened since"]
+    ];
+    $("#strip").innerHTML = cells.map(([k,v,l])=>`<div class="${k}"><b>${v}</b><span>${l}</span></div>`).join("");
+    const nBots = rows.filter(r=>r.k==="pr"&&bot(r)&&r.s==="open").length;
+    $("#bots").parentElement.lastChild.textContent = ` Show bot PRs (${nBots})`;
+
+    const KINDS=[["all","All"],["issue","Issues"],["pr","Pull requests"]];
+    $("#kind").innerHTML = KINDS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k===kind}">${l} ${k==="all"?vis.length:vis.filter(r=>r.k===k).length}</button>`).join("");
+    const STATES=[["all","Any state"],["open","Still open"],["done","Closed or merged"],["new","New"]];
+    $("#state").innerHTML = `<span class="controls" style="display:inline-flex">${STATES.map(([k,l])=>`<button type="button" data-s="${k}" aria-pressed="${k===state}">${l}</button>`).join("")}</span>`;
+
+    const q = ($("#q").value||"").toLowerCase();
+    const keep = r => (kind==="all"||r.k===kind)
+      && (state==="all" || (state==="open"&&r.s==="open") || (state==="done"&&r.s!=="open") || (state==="new"&&r.isNew))
+      && (!q || (r.r+" "+r.t+" "+r.a+" "+r.l.join(" ")).toLowerCase().includes(q));
+    const shown = vis.filter(keep);
+    $("#count").textContent = `${shown.length} shown`;
+    const byRepo = {};
+    shown.forEach(r=>(byRepo[r.r] ||= []).push(r));
+    const repos = Object.keys(byRepo).sort((a,b)=>byRepo[b].length-byRepo[a].length || a.localeCompare(b));
+    const open0 = repos.length<=6 || !!q || state!=="all";
+    $("#groups").innerHTML = repos.map(repo=>{
+      const rs = byRepo[repo].sort((a,b)=> (a.s==="open")-(b.s==="open") || b.up.localeCompare(a.up));
+      const t = k => rs.filter(r=>k==="done"?r.s!=="open":r.s==="open").length;
+      const tally = [t("open")?`<span class="chip c-open">${t("open")} open</span>`:"", t("done")?`<span class="chip c-merged">${t("done")} done</span>`:"", rs.some(r=>r.isNew)?`<span class="chip c-new">${rs.filter(r=>r.isNew).length} new</span>`:""].join("");
+      return `<details class="grp"${open0||rs.some(r=>r.s!=="open"||r.isNew)?" open":""}><summary><h3>${esc(repo)}</h3><span class="tally">${tally}</span></summary>
+        <ul class="items">${rs.map(r=>`<li class="${r.s!=="open"?"done":""}">
+          <span class="ref"><a href="${esc(r.u)}" aria-label="${esc(r.r)} ${r.k==='pr'?'pull request':'issue'} ${r.n}">#${r.n}</a><span class="kind">${r.k==="pr"?"PR":"issue"}</span></span>
+          <span class="body"><span class="t">${esc(r.t)}</span><span class="meta">${esc(r.a)} &middot; opened ${fmtDate(r.c)} &middot; updated ${fmtDate(r.up)}${r.l.map(l=>`<span class="lb">${esc(l)}</span>`).join("")}</span></span>
+          <span class="st">${r.s!=="open"?`<span class="chip c-${r.s}">${LABEL[r.s]} ${fmtDate(r.at)}</span>`:r.isNew?`<span class="chip c-new">new</span>`:`<span class="chip c-open">open</span>`}${r.d?`<span class="chip c-draft">draft</span>`:""}${bot(r)?`<span class="chip c-bot">bot</span>`:""}</span>
+        </li>`).join("")}</ul></details>`;
+    }).join("") || `<p class="empty">Nothing matches this filter.</p>`;
+  }
+  const bot = r => BOTS.test(r.a);
+
+  $("#kind").addEventListener("click", e=>{const b=e.target.closest("button[data-k]"); if(!b) return; kind=b.dataset.k; render();});
+  $("#state").addEventListener("click", e=>{const b=e.target.closest("button[data-s]"); if(!b) return; state=b.dataset.s; render();});
+  $("#bots").addEventListener("change", render);
+  $("#q").addEventListener("input", render);
+
+  fetch("open-items.json", {cache:"no-store"}).then(r=>r.json()).then(data=>{
+    rows = data.rows;
+    $("#fresh").innerHTML = `Data generated <b>${esc(fmtDateTime(data.generatedAt))}</b>. `
+      + `<a href="${WORKFLOW_URL}">Run a refresh now</a>.`;
+    render();
+  }).catch(err=>{
+    $("#fresh").textContent = "Could not load open-items.json: " + err;
+  });
+})();
+</script>
+</body>
+</html>
