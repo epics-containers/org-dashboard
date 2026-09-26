@@ -112,7 +112,7 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
   <div class="controls">
     <span id="state"></span>
     <span class="sep" aria-hidden="true"></span>
-    <label><input type="checkbox" id="bots"> Show bot PRs</label>
+    <label><input type="checkbox" id="bots"> Show bot items</label>
     <input id="q" type="search" placeholder="Filter by repo, title, author or label" aria-label="Filter by repo, title, author or label">
     <button type="button" id="toggleAll">Expand all</button>
     <span class="count" id="count"></span>
@@ -128,7 +128,6 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
 (function(){
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-  const BOTS = /\[bot\]$/;
   const fmtDate = d => d ? new Date(d+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",timeZone:"UTC"}) : "";
   const fmtDateTime = d => d ? new Date(d).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC",timeZoneName:"short"}) : "";
   const LABEL = {merged:"merged",closed:"closed",not_planned:"closed (not planned)",open:"open",new:"new"};
@@ -141,7 +140,7 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
 
   function render(){
     const showBots = $("#bots").checked;
-    const vis = rows.filter(r=>showBots || r.k==="issue" || !bot(r));
+    const vis = rows.filter(r=>showBots || !r.bot);
     const n = f => vis.filter(f).length;
     const cells = [
       ["k-open", n(r=>r.s==="open"), "open now"],
@@ -152,8 +151,8 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
       ["k-new", n(r=>r.isNew), `opened in last ${win.new} days`]
     ];
     $("#strip").innerHTML = cells.map(([k,v,l])=>`<div class="${k}"><b>${v}</b><span>${l}</span></div>`).join("");
-    const nBots = rows.filter(r=>r.k==="pr"&&bot(r)&&r.s==="open").length;
-    $("#bots").parentElement.lastChild.textContent = ` Show bot PRs (${nBots})`;
+    const nBots = rows.filter(r=>r.bot&&r.s==="open").length;
+    $("#bots").parentElement.lastChild.textContent = ` Show bot items (${nBots})`;
 
     const KINDS=[["all","All"],["issue","Issues"],["pr","Pull requests"]];
     $("#kind").innerHTML = KINDS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k===kind}">${l} ${k==="all"?vis.length:vis.filter(r=>r.k===k).length}</button>`).join("");
@@ -178,13 +177,11 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
         <ul class="items">${rs.map(r=>`<li class="${r.s!=="open"?"done":""}">
           <span class="ref"><a href="${esc(r.u)}" aria-label="${esc(r.r)} ${r.k==='pr'?'pull request':'issue'} ${r.n}">#${r.n}</a><span class="kind">${r.k==="pr"?"PR":"issue"}</span></span>
           <span class="body"><span class="t">${esc(r.t)}</span><span class="meta">${esc(r.a)} &middot; opened ${fmtDate(r.c)} &middot; updated ${fmtDate(r.up)}${r.l.map(l=>`<span class="lb">${esc(l)}</span>`).join("")}</span></span>
-          <span class="st">${r.s!=="open"?`<span class="chip c-${r.s}">${LABEL[r.s]} ${fmtDate(r.at)}</span>`:r.isNew?`<span class="chip c-new">new</span>`:`<span class="chip c-open">open</span>`}${r.d?`<span class="chip c-draft">draft</span>`:""}${bot(r)?`<span class="chip c-bot">bot</span>`:""}</span>
+          <span class="st">${r.s!=="open"?`<span class="chip c-${r.s}">${LABEL[r.s]} ${fmtDate(r.at)}</span>`:r.isNew?`<span class="chip c-new">new</span>`:`<span class="chip c-open">open</span>`}${r.d?`<span class="chip c-draft">draft</span>`:""}${r.bot?`<span class="chip c-bot">bot</span>`:""}</span>
         </li>`).join("")}</ul></details>`;
     }).join("") || `<p class="empty">Nothing matches this filter.</p>`;
     $("#toggleAll").textContent = expandAll ? "Collapse all" : "Expand all";
   }
-  const bot = r => BOTS.test(r.a);
-
   $("#kind").addEventListener("click", e=>{const b=e.target.closest("button[data-k]"); if(!b) return; kind=b.dataset.k; render();});
   $("#state").addEventListener("click", e=>{const b=e.target.closest("button[data-s]"); if(!b) return; state=b.dataset.s; render();});
   $("#bots").addEventListener("change", render);
