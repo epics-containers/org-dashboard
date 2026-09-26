@@ -114,6 +114,7 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
     <span class="sep" aria-hidden="true"></span>
     <label><input type="checkbox" id="bots"> Show bot PRs</label>
     <input id="q" type="search" placeholder="Filter by repo, title, author or label" aria-label="Filter by repo, title, author or label">
+    <button type="button" id="toggleAll">Expand all</button>
     <span class="count" id="count"></span>
   </div>
   <div id="groups"></div>
@@ -134,7 +135,8 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
   const REPO = "epics-containers/org-dashboard";
   const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/pages.yml`;
   let rows = [];
-  let kind="all", state="all";
+  let kind="all", state="open";
+  let expandAll = false; // remembered across re-renders; flipped only by the toggle button
 
   function render(){
     const showBots = $("#bots").checked;
@@ -166,18 +168,18 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
     const byRepo = {};
     shown.forEach(r=>(byRepo[r.r] ||= []).push(r));
     const repos = Object.keys(byRepo).sort((a,b)=>byRepo[b].length-byRepo[a].length || a.localeCompare(b));
-    const open0 = repos.length<=6 || !!q || state!=="all";
     $("#groups").innerHTML = repos.map(repo=>{
       const rs = byRepo[repo].sort((a,b)=> (a.s==="open")-(b.s==="open") || b.up.localeCompare(a.up));
       const t = k => rs.filter(r=>k==="done"?r.s!=="open":r.s==="open").length;
       const tally = [t("open")?`<span class="chip c-open">${t("open")} open</span>`:"", t("done")?`<span class="chip c-merged">${t("done")} done</span>`:"", rs.some(r=>r.isNew)?`<span class="chip c-new">${rs.filter(r=>r.isNew).length} new</span>`:""].join("");
-      return `<details class="grp"${open0||rs.some(r=>r.s!=="open"||r.isNew)?" open":""}><summary><h3>${esc(repo)}</h3><span class="tally">${tally}</span></summary>
+      return `<details class="grp"${expandAll?" open":""}><summary><h3>${esc(repo)}</h3><span class="tally">${tally}</span></summary>
         <ul class="items">${rs.map(r=>`<li class="${r.s!=="open"?"done":""}">
           <span class="ref"><a href="${esc(r.u)}" aria-label="${esc(r.r)} ${r.k==='pr'?'pull request':'issue'} ${r.n}">#${r.n}</a><span class="kind">${r.k==="pr"?"PR":"issue"}</span></span>
           <span class="body"><span class="t">${esc(r.t)}</span><span class="meta">${esc(r.a)} &middot; opened ${fmtDate(r.c)} &middot; updated ${fmtDate(r.up)}${r.l.map(l=>`<span class="lb">${esc(l)}</span>`).join("")}</span></span>
           <span class="st">${r.s!=="open"?`<span class="chip c-${r.s}">${LABEL[r.s]} ${fmtDate(r.at)}</span>`:r.isNew?`<span class="chip c-new">new</span>`:`<span class="chip c-open">open</span>`}${r.d?`<span class="chip c-draft">draft</span>`:""}${bot(r)?`<span class="chip c-bot">bot</span>`:""}</span>
         </li>`).join("")}</ul></details>`;
     }).join("") || `<p class="empty">Nothing matches this filter.</p>`;
+    $("#toggleAll").textContent = expandAll ? "Collapse all" : "Expand all";
   }
   const bot = r => BOTS.test(r.a);
 
@@ -185,6 +187,7 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
   $("#state").addEventListener("click", e=>{const b=e.target.closest("button[data-s]"); if(!b) return; state=b.dataset.s; render();});
   $("#bots").addEventListener("change", render);
   $("#q").addEventListener("input", render);
+  $("#toggleAll").addEventListener("click", ()=>{ expandAll = !expandAll; render(); });
 
   fetch("open-items.json", {cache:"no-store"}).then(r=>r.json()).then(data=>{
     rows = data.rows;
