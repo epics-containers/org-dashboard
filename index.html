@@ -102,8 +102,8 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
   <header>
     <span class="eyebrow">epics-containers &middot; GitHub organisation</span>
     <h1>Open issues and pull requests</h1>
-    <p>Everything open across the organisation, refreshed on a schedule. Items closed or merged
-      recently are struck through and labelled with when; items opened recently are marked new.</p>
+    <p id="lede">Every open issue and pull request across the organisation, refreshed every 30
+      minutes.</p>
     <span class="fresh" id="fresh">Loading&hellip;</span>
     <div class="strip" id="strip"></div>
   </header>
@@ -135,6 +135,7 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
   const REPO = "epics-containers/org-dashboard";
   const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/pages.yml`;
   let rows = [];
+  let win = {closed:0, new:0}; // the windows the data was built with, from open-items.json
   let kind="all", state="open";
   let expandAll = false; // remembered across re-renders; flipped only by the toggle button
 
@@ -146,9 +147,9 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
       ["k-open", n(r=>r.s==="open"), "open now"],
       ["", n(r=>r.k==="issue"&&r.s==="open"), "issues"],
       ["", n(r=>r.k==="pr"&&r.s==="open"), "pull requests"],
-      ["k-merged", n(r=>r.s==="merged"), "merged since"],
-      ["k-closed", n(r=>r.s==="closed"||r.s==="not_planned"), "closed since"],
-      ["k-new", n(r=>r.isNew), "opened since"]
+      ["k-merged", n(r=>r.s==="merged"), `merged in last ${win.closed} days`],
+      ["k-closed", n(r=>r.s==="closed"||r.s==="not_planned"), `closed in last ${win.closed} days`],
+      ["k-new", n(r=>r.isNew), `opened in last ${win.new} days`]
     ];
     $("#strip").innerHTML = cells.map(([k,v,l])=>`<div class="${k}"><b>${v}</b><span>${l}</span></div>`).join("");
     const nBots = rows.filter(r=>r.k==="pr"&&bot(r)&&r.s==="open").length;
@@ -156,7 +157,8 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
 
     const KINDS=[["all","All"],["issue","Issues"],["pr","Pull requests"]];
     $("#kind").innerHTML = KINDS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k===kind}">${l} ${k==="all"?vis.length:vis.filter(r=>r.k===k).length}</button>`).join("");
-    const STATES=[["all","Any state"],["open","Still open"],["done","Closed or merged"],["new","New"]];
+    const STATES=[["all","Any state"],["open","Still open"],
+      ["done",`Closed or merged (${win.closed} days)`],["new",`New (${win.new} days)`]];
     $("#state").innerHTML = `<span class="controls" style="display:inline-flex">${STATES.map(([k,l])=>`<button type="button" data-s="${k}" aria-pressed="${k===state}">${l}</button>`).join("")}</span>`;
 
     const q = ($("#q").value||"").toLowerCase();
@@ -191,6 +193,11 @@ footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padd
 
   fetch("open-items.json", {cache:"no-store"}).then(r=>r.json()).then(data=>{
     rows = data.rows;
+    win = data.windowDays || win;
+    $("#lede").textContent = `Every open issue and pull request across the organisation, `
+      + `refreshed every 30 minutes. Items merged or closed in the last ${win.closed} days `
+      + `stay listed, struck through and dated; items opened in the last ${win.new} days are `
+      + `marked new.`;
     $("#fresh").innerHTML = `Data generated <b>${esc(fmtDateTime(data.generatedAt))}</b>. `
       + `<a href="${WORKFLOW_URL}">Run a refresh now</a>.`;
     render();
