@@ -1,5 +1,7 @@
 # org-dashboard
 
+**Dashboard: <https://epics-containers.github.io/org-dashboard/>**
+
 A dashboard, published on GitHub Pages, listing every open issue and pull
 request across the `epics-containers` GitHub organisation: grouped by repo,
 filterable by issue/PR and state, with bot PRs hidden by default and a search
