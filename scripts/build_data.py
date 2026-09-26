@@ -28,6 +28,7 @@ OUT_PATH = Path(__file__).resolve().parent.parent / "site" / "open-items.json"
 QUERY = """
 query($q: String!, $cursor: String) {
   search(query: $q, type: ISSUE, first: 100, after: $cursor) {
+    issueCount
     pageInfo { hasNextPage endCursor }
     nodes {
       __typename
@@ -74,6 +75,13 @@ def search(query: str) -> list[dict]:
         page = json.loads(out.stdout)["data"]["search"]
         nodes.extend(page["nodes"])
         if not page["pageInfo"]["hasNextPage"]:
+            if page["issueCount"] > len(nodes):
+                # GitHub search caps results at 1,000 regardless of the true
+                # match count -- fail loudly rather than publish a partial list.
+                raise SystemExit(
+                    f"search truncated: got {len(nodes)}/{page['issueCount']} "
+                    f"results for {query!r} (GitHub search caps at 1000; "
+                    "split the query, e.g. by repository or date, to fetch more)")
             return nodes
         cursor = page["pageInfo"]["endCursor"]
 
